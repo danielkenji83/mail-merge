@@ -10,7 +10,6 @@ import org.w3c.dom.NodeList;
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public class MailMergeODT implements MailMergeDocument {
@@ -69,7 +68,7 @@ public class MailMergeODT implements MailMergeDocument {
             if (table != null) {
                 NodeList rows =
                         ((Element) tableNode).getElementsByTagName("table:table-row");
-                appendRows(document, rows, tableNode, table.length, table[0].length);
+                appendRows(rows, tableNode, table.length);
                 checkIfTableHasSameNumberOfColumns(table, rows, tableName);
                 writeTable(table, rows);
                 notProcessed.remove(tableName);
@@ -169,37 +168,13 @@ public class MailMergeODT implements MailMergeDocument {
     }
 
     private void appendRows(
-            Document content,
             NodeList rows,
             Node tableNode,
-            int tableRowNumber,
-            int tableColumnNumber
+            int tableRowNumber
     ) {
         for (int i = rows.getLength(); i < tableRowNumber; i++) {
             Node lastRow = rows.item(rows.getLength() - 1);
-            NodeList lastRowChilds = lastRow.getChildNodes();
-            Node row = content.createElement("table:table-row");
-            tableNode.appendChild(row);
-
-            for (int j = 0; j < tableColumnNumber; j++) {
-                Element cell = content.createElement("table:table-cell");
-                Node item = lastRowChilds.item(j);
-                Optional
-                        .ofNullable(item.getAttributes().getNamedItem("table:style-name"))
-                        .map(Node::getTextContent)
-                        .ifPresent(t -> cell.setAttribute("table:style-name", t));
-
-                cell.setAttribute("office:value-type", "string");
-                row.appendChild(cell);
-                Element textNode = content.createElement("text:p");
-                Optional
-                        .ofNullable(
-                                item.getFirstChild().getAttributes().getNamedItem("text:style-name")
-                        )
-                        .map(Node::getTextContent)
-                        .ifPresent(t -> textNode.setAttribute("table:style-name", t));
-                cell.appendChild(textNode);
-            }
+            tableNode.appendChild(lastRow.cloneNode(true));
         }
     }
 
@@ -237,7 +212,7 @@ public class MailMergeODT implements MailMergeDocument {
                 String type = Utils.isNumeric(table[i][j]) ? "float" : "string";
                 cell.setAttribute("office:value", table[i][j]);
                 cell.setAttribute("office:value-type", type);
-                cell.getFirstChild().setTextContent(table[i][j]);
+                cell.getElementsByTagName("text:p").item(0).setTextContent(table[i][j]);
             }
         }
     }
