@@ -32,7 +32,7 @@ public class MailMergeController {
     public byte[] process(
             @RequestPart("data") MailMergeDTO mailMergeDTO,
             @RequestPart("template") MultipartFile template,
-            @RequestPart("images") MultipartFile[] images
+            @RequestPart(value = "images", required = false) MultipartFile[] images
     ) throws IOException, MailMergeException, InterruptedException, TransformerException {
         Path templateFile = createTempTemplate(template);
         try {
@@ -57,7 +57,7 @@ public class MailMergeController {
     public byte[] processBatch(
             @RequestPart("data") List<MailMergeDTO> mailMergeDTOs,
             @RequestPart("template") MultipartFile template,
-            @RequestPart("images") MultipartFile[] images
+            @RequestPart(value = "images", required = false) MultipartFile[] images
     ) throws IOException, MailMergeException, InterruptedException, TransformerException {
         Path templateFile = createTempTemplate(template);
         try {
@@ -93,6 +93,10 @@ public class MailMergeController {
     }
 
     private Map<String, byte[]> getImageMap(MailMergeDTO mailMergeDTO, MultipartFile[] images) throws IOException, MailMergeException {
+        if (images == null || images.length == 0) {
+            return new HashMap<>();
+        }
+
         Map<String, byte[]> imageByOriginalFilename = new HashMap<>();
         for (MultipartFile image : images) {
             if (image.isEmpty()) {
